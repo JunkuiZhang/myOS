@@ -10,12 +10,12 @@ Shell::Shell(unsigned int *bbase, unsigned int resolution_hor,
 	padding = PaddingPixel{15, 15, 12, 12, 3};
 	shell_vertical_pixel = (uint32_t)resolution_ver;
 	buffer_base = bbase;
-	row_col_info.max_row =
-		(shell_vertical_pixel - padding.leading - padding.trailing) /
-		(font_info.font_height + 2 * padding.between);
-	row_col_info.max_col =
-		(shell_horizontal_pixel - padding.top - padding.bottom) /
-		font_info.font_width;
+	row_col_info.max_row = (shell_vertical_pixel - padding.top -
+							padding.bottom - font_info.font_height) /
+						   (font_info.font_height + 2 * padding.between);
+	row_col_info.max_col = (shell_horizontal_pixel - padding.leading -
+							padding.trailing - font_info.font_width) /
+						   font_info.font_width;
 	row_col_info.current_row = 0;
 	row_col_info.current_col = 0;
 	font_foreground_color = 0xffffffff;
