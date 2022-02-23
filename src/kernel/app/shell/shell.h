@@ -32,6 +32,8 @@ class Shell {
 	char string_buffer[256];
 	uint32_t string_buffer_index;
 
+	// char total_string_data[]
+
 	unsigned char *matchChar(char c);
 	void checkBounds();
 	void stringPreprocess(const char *str, va_list args);
@@ -43,6 +45,7 @@ class Shell {
 	~Shell();
 
 	void print(const char *str, ...);
-	void setPosition(uint32_t row, uint32_t col);
 	void putchar(char c);
+
+	void getShellInfo();
 };

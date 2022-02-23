@@ -23,6 +23,7 @@ extern "C" void _start(boot_param_t *m_boot_para) {
 	shell.print("Print: %d\n", 123);
 	shell.print("Print: %x\n", 123);
 	shell.print("Print: %s\n", "TEST");
+	shell.getShellInfo();
 
 	/* spin */
 	while (1) {

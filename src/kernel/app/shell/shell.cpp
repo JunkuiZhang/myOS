@@ -172,4 +172,7 @@ void Shell::putchar(char c) {
 	checkBounds();
 	return;
 }
-void Shell::setPosition(uint32_t row, uint32_t col) {}
+void Shell::getShellInfo() {
+	print("Shell row: %d, col: %d\n", row_col_info.max_row,
+		  row_col_info.max_col);
+}
