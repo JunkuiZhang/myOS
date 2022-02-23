@@ -12,18 +12,21 @@ struct PaddingPixel {
 	uint32_t between;
 };
 
+struct ShellRowColInfo {
+	uint32_t current_row;
+	uint32_t current_col;
+	uint32_t max_row;
+	uint32_t max_col;
+};
+
 class Shell {
   private:
-	unsigned char *font;
 	FontStructure font_info;
 	uint32_t shell_horizontal_pixel;
 	PaddingPixel padding;
 	uint32_t shell_vertical_pixel;
 	unsigned int *buffer_base;
-	uint32_t current_row;
-	uint32_t current_col;
-	uint32_t max_row;
-	uint32_t max_col;
+	ShellRowColInfo row_col_info;
 	unsigned int font_foreground_color;
 
 	char string_buffer[256];

@@ -2,20 +2,22 @@
 
 Shell::Shell(unsigned int *bbase, unsigned int resolution_hor,
 			 unsigned int resolution_ver) {
-	font = FONT_DATA;
-	font_info.bytes_per_world = 24;
+	font_info.raw_data = FONT_DATA;
+	font_info.bytes_per_word = 24;
 	font_info.font_width = 12;
 	font_info.font_height = 16;
 	shell_horizontal_pixel = (uint32_t)resolution_hor;
 	padding = PaddingPixel{15, 15, 12, 12, 3};
 	shell_vertical_pixel = (uint32_t)resolution_ver;
 	buffer_base = bbase;
-	max_row = (shell_vertical_pixel - padding.leading - padding.trailing) /
-			  (font_info.font_height + 2 * padding.between);
-	max_col = (shell_horizontal_pixel - padding.top - padding.bottom) /
-			  font_info.font_width;
-	current_row = 0;
-	current_col = 0;
+	row_col_info.max_row =
+		(shell_vertical_pixel - padding.leading - padding.trailing) /
+		(font_info.font_height + 2 * padding.between);
+	row_col_info.max_col =
+		(shell_horizontal_pixel - padding.top - padding.bottom) /
+		font_info.font_width;
+	row_col_info.current_row = 0;
+	row_col_info.current_col = 0;
 	font_foreground_color = 0xffffffff;
 
 	for (uint32_t i = 0; i < 256; i++) {
@@ -27,17 +29,17 @@ Shell::Shell(unsigned int *bbase, unsigned int resolution_hor,
 Shell::~Shell() {}
 
 unsigned char *Shell::matchChar(char c) {
-	return &font[((uint32_t)c - 0x20) * font_info.bytes_per_world];
+	return &font_info.raw_data[((uint32_t)c - 0x20) * font_info.bytes_per_word];
 }
 
 void Shell::checkBounds() {
-	if (current_row > max_row) {
-		current_row = 0;
-		current_col += 1;
+	if (row_col_info.current_row > row_col_info.max_row) {
+		row_col_info.current_row = 0;
+		row_col_info.current_col += 1;
 	}
-	if (current_col > max_col) {
-		current_col = 0;
-		current_row += 1;
+	if (row_col_info.current_col > row_col_info.max_col) {
+		row_col_info.current_col = 0;
+		row_col_info.current_row += 1;
 	}
 }
 
@@ -131,24 +133,25 @@ void Shell::print(const char *str, ...) {
 
 void Shell::putchar(char c) {
 	if (c == ' ') {
-		current_col += 1;
+		row_col_info.current_col += 1;
 		checkBounds();
 		return;
 	}
 	if (c == '\r' || c == '\n') {
-		current_row += 1;
-		current_col = 0;
+		row_col_info.current_row += 1;
+		row_col_info.current_col = 0;
 		return;
 	}
 	// pixel before current row
-	uint32_t pixel_offset =
-		(current_row * (font_info.font_height + 2 * padding.between) +
-		 padding.top) *
-			shell_horizontal_pixel +
-		current_col * font_info.font_width + padding.leading;
+	uint32_t pixel_offset = (row_col_info.current_row *
+								 (font_info.font_height + 2 * padding.between) +
+							 padding.top) *
+								shell_horizontal_pixel +
+							row_col_info.current_col * font_info.font_width +
+							padding.leading;
 
 	auto char_data = matchChar(c);
-	for (uint32_t byte_index = 0; byte_index < font_info.bytes_per_world;
+	for (uint32_t byte_index = 0; byte_index < font_info.bytes_per_word;
 		 byte_index++) {
 		for (uint32_t bit_index = 0; bit_index < 8; bit_index++) {
 			unsigned char bit_mask = 0x80 >> bit_index;
@@ -165,7 +168,7 @@ void Shell::putchar(char c) {
 			}
 		}
 	}
-	current_col += 1;
+	row_col_info.current_col += 1;
 	checkBounds();
 	return;
 }

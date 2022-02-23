@@ -2,7 +2,8 @@
 #include <stdint.h>
 
 struct FontStructure {
-	uint32_t bytes_per_world;
+	unsigned char *raw_data;
+	uint32_t bytes_per_word;
 	uint32_t font_width;
 	uint32_t font_height;
 };
