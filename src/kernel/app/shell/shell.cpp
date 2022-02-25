@@ -13,8 +13,7 @@ Shell::Shell(unsigned int *bbase, unsigned int resolution_hor,
 	buffer_base = bbase;
 	row_col_info.max_row = (shell_vertical_pixel - padding.top -
 							padding.bottom - font_info.font_height) /
-							   (font_info.font_height + 2 * padding.between) -
-						   10;
+						   (font_info.font_height + 2 * padding.between);
 	row_col_info.max_col = (shell_horizontal_pixel - padding.leading -
 							padding.trailing - font_info.font_width) /
 						   font_info.font_width;
