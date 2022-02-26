@@ -7,6 +7,7 @@ typedef struct {
 	unsigned int *frame_base;
 	unsigned int width;
 	unsigned int height;
+	size_t frame_size;
 } GOPInfo;
 
 EFI_FILE *loadKernel(EFI_FILE *directory, CHAR16 *path, EFI_HANDLE image_handle,
@@ -71,6 +72,7 @@ GOPInfo *initializeGOP() {
 	gop_info.frame_base = (unsigned int *)gop->Mode->FrameBufferBase;
 	gop_info.width = gop->Mode->Info->HorizontalResolution;
 	gop_info.height = gop->Mode->Info->VerticalResolution;
+	gop_info.frame_size = gop->Mode->FrameBufferSize;
 	Print(L"width: %d, height: %d\n", gop->Mode->Info->HorizontalResolution,
 		  gop->Mode->Info->VerticalResolution);
 	return &gop_info;
@@ -80,6 +82,7 @@ typedef struct {
 	unsigned int *framebuffer;
 	unsigned int width;
 	unsigned int height;
+	size_t buffer_size;
 	EFI_MEMORY_DESCRIPTOR *mem_map;
 	UINTN mem_map_size;
 	UINTN mem_desc_size;
@@ -188,6 +191,9 @@ efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table) {
 	boot_param.framebuffer = (unsigned int *)(temp_info->frame_base);
 	boot_param.width = temp_info->width;
 	boot_param.height = temp_info->height;
+	boot_param.buffer_size = temp_info->frame_size;
+	Print(L"BS: %d, w * h: %d\n", boot_param.buffer_size,
+		  boot_param.width * boot_param.height);
 
 	void (*kernel_entry)(BootParamater *) = ((__attribute__((
 		sysv_abi)) void (*)(BootParamater *))kernel_file_header.e_entry);

@@ -13,6 +13,14 @@ PageBitmap::PageBitmap() {
 	buffer = NULL;
 }
 
+void PageBitmap::init(size_t m_size, uint8_t *m_buffer) {
+	size = m_size;
+	buffer = m_buffer;
+	for (uint64_t x = 0; x < size; x++) {
+		*(uint8_t *)(buffer + x) = 0;
+	}
+}
+
 bool PageBitmap::operator[](uint64_t index) {
 	uint64_t byte_index = index / 8;
 	uint8_t bit_index = index % 8;
@@ -33,5 +41,7 @@ void PageBitmap::setBitmapValue(uint64_t index, bool value) {
 		buffer[byte_index] = buffer[byte_index] & (~bit_index_mask);
 	}
 }
+
+size_t PageBitmap::getSize() { return size; }
 
 PageBitmap::~PageBitmap() {}

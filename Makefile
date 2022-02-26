@@ -68,7 +68,7 @@ build/kernel/%.o: src/kernel/%.cpp
 	clang -target x86_64-elf -fno-stack-protector -fno-stack-check -fno-exceptions -D__x86_64__ -I. -c $(patsubst build/kernel/%.o, src/kernel/%.cpp, $@) -o $@
 
 build/myos_img/kernel.elf: build/kernel/main.o $(OBJ)
-	ld.lld -nostdlib -z max-page-size=0x1000 -Ttext=0x01000000 -o $@ $^
+	ld.lld -nostdlib -z max-page-size=0x1000 -T src/kernel/kernel.ld -o $@ $^
 
 # run: esp_directory build/myos_img/kernel.elf
 # 	qemu-system-x86_64 -net none \
