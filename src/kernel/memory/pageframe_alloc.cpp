@@ -9,6 +9,7 @@ PageFrameAllocator::PageFrameAllocator(EfiMemoryDescriptor *memory_map,
 	used_memory_size = 0;
 	free_memory_size = 0;
 	reserved_memory_size = 0;
+	bitmap_index_cache = 0;
 
 	for (uint64_t x = 0; x < map_entries; x++) {
 		EfiMemoryDescriptor *desc =
@@ -46,36 +47,50 @@ void PageFrameAllocator::freePage(void *address) {
 	uint64_t index = (uint64_t)address / 4096;
 	if (!page_bitmap[index])
 		return;
-	page_bitmap.setBitmapValue(index, false);
-	free_memory_size += 4096;
-	used_memory_size -= 4096;
+	if (page_bitmap.setBitmapValue(index, false)) {
+		// page_bitmap.setBitmapValue(index, false);
+		free_memory_size += 4096;
+		used_memory_size -= 4096;
+		if (bitmap_index_cache > index) {
+			bitmap_index_cache = index;
+		}
+	}
 }
 
 void PageFrameAllocator::lockPage(void *address) {
 	uint64_t index = (uint64_t)address / 4096;
 	if (page_bitmap[index])
 		return;
-	page_bitmap.setBitmapValue(index, true);
-	free_memory_size -= 4096;
-	used_memory_size += 4096;
+	if (page_bitmap.setBitmapValue(index, true)) {
+		// page_bitmap.setBitmapValue(index, true);
+		free_memory_size -= 4096;
+		used_memory_size += 4096;
+	}
 }
 
 void PageFrameAllocator::unreservePage(void *address) {
 	uint64_t index = (uint64_t)address / 4096;
 	if (!page_bitmap[index])
 		return;
-	page_bitmap.setBitmapValue(index, false);
-	free_memory_size += 4096;
-	reserved_memory_size -= 4096;
+	if (page_bitmap.setBitmapValue(index, false)) {
+		// page_bitmap.setBitmapValue(index, false);
+		free_memory_size += 4096;
+		reserved_memory_size -= 4096;
+		if (bitmap_index_cache > index) {
+			bitmap_index_cache = index;
+		}
+	}
 }
 
 void PageFrameAllocator::reservePage(void *address) {
 	uint64_t index = (uint64_t)address / 4096;
 	if (page_bitmap[index])
 		return;
-	page_bitmap.setBitmapValue(index, true);
-	free_memory_size -= 4096;
-	reserved_memory_size += 4096;
+	if (page_bitmap.setBitmapValue(index, true)) {
+		// page_bitmap.setBitmapValue(index, true);
+		free_memory_size -= 4096;
+		reserved_memory_size += 4096;
+	}
 }
 
 void PageFrameAllocator::freePages(void *address, uint64_t page_count) {
@@ -111,10 +126,14 @@ uint64_t PageFrameAllocator::getReservedMemorySize() {
 }
 
 void *PageFrameAllocator::requestPage() {
-	for (uint64_t x = 0; x < page_bitmap.getSize(); x++) {
-		if (page_bitmap[x])
+	for (; bitmap_index_cache < page_bitmap.getSize() * 8;
+		 bitmap_index_cache++) {
+		if (bitmap_index_cache > page_bitmap.getSize() * 8) {
+			bitmap_index_cache = 0;
+		}
+		if (page_bitmap[bitmap_index_cache])
 			continue;
-		uint64_t addres = x * 4096;
+		uint64_t addres = bitmap_index_cache * 4096;
 		lockPage((void *)addres);
 		return (void *)addres;
 	}

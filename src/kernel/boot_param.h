@@ -14,4 +14,4 @@ typedef struct {
 	void *mem_map;
 	uint64_t mem_map_size;
 	uint64_t mem_desc_size;
-} boot_param_t;
+} BootParamter;

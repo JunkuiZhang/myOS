@@ -24,10 +24,12 @@ OBJ_FLAGS = \
 
 SRC = $(shell find src/kernel -name *.cpp)
 OBJ = $(patsubst src/kernel/%.cpp, build/kernel/%.o, $(SRC))
+ASMSRC = $(shell find src/kernel -name *.asm)
+ASMOBJ = $(patsubst src/kernel/%.asm, build/kernel/%_asm.o, $(ASMSRC))
 
 run: build/myos_img/EFI/BOOT/BootX64.efi build/myos_img/kernel.elf
 # run: build/myos_img/EFI/BOOT/BootX64.efi esp_directory
-	qemu-system-x86_64 -m 128M -net none \
+	qemu-system-x86_64 -net none \
 	-drive if=pflash,format=raw,file=$(BIOS_CODE),readonly=on \
 	-drive if=pflash,format=raw,file=$(BIOS_VARS),readonly=on \
 	-drive format=raw,file=fat:rw:build/myos_img
@@ -65,9 +67,13 @@ build/kernel/main.o: src/kernel/main.cpp
 
 build/kernel/%.o: src/kernel/%.cpp
 	@mkdir -p $(@D)
-	clang -target x86_64-elf -fno-stack-protector -fno-stack-check -fno-exceptions -D__x86_64__ -I. -c $(patsubst build/kernel/%.o, src/kernel/%.cpp, $@) -o $@
+	clang -target x86_64-elf -fno-stack-protector -fno-stack-check -fno-exceptions -D__x86_64__ -I. -c $(patsubst build/kernel/%.o, src/kernel/%.cpp, $(OBJ)) -o $@
 
-build/myos_img/kernel.elf: build/kernel/main.o $(OBJ)
+build/kernel/%_asm.o: src/kernel/%.asm
+	@mkdir -p $(@D)
+	nasm $(patsubst build/kernel/%_asm.o, src/kernel/%.asm, $(ASMOBJ)) -f elf64 -o $@
+
+build/myos_img/kernel.elf: build/kernel/main.o $(OBJ) $(ASMOBJ)
 	ld.lld -nostdlib -z max-page-size=0x1000 -T src/kernel/kernel.ld -o $@ $^
 
 # run: esp_directory build/myos_img/kernel.elf

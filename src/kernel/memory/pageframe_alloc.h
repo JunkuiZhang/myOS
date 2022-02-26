@@ -10,6 +10,7 @@ class PageFrameAllocator {
 	uint64_t free_memory_size;	   /* in bytes */
 	uint64_t used_memory_size;	   /* in bytes */
 	uint64_t reserved_memory_size; /* in bytes */
+	uint64_t bitmap_index_cache;
 
 	void reservePage(void *address);
 	void unreservePage(void *address);
