@@ -55,31 +55,15 @@ extern "C" void _start(BootParamter *boot_param) {
 
 	asm("mov %0, %%cr3" : : "r"(pml4));
 
-	auto screen_manager = ScreenManager((unsigned int *)framebuffer_base,
-										boot_param->width, boot_param->height);
+	auto screen_manager =
+		ScreenManager((unsigned int *)framebuffer_base, boot_param->width,
+					  boot_param->height, background_color);
 	screen_manager.clearScreen(background_color);
 	OS_SCREEN_MANAGER = &screen_manager;
 
 	auto shell = Shell((unsigned int *)framebuffer_base, boot_param->width,
 					   boot_param->height, 0xffffffff, 0xff002255);
 	OS_SHELL = &shell;
-
-	shell.println("New page map now!");
-	shell.println("Hello from kernel!");
-	shell.getShellInfo();
-	shell.println("Frame size: %d, raw num: %d", boot_param->framebuffer_size,
-				  boot_param->width * boot_param->height);
-	shell.deleteChar(0, 3);
-	// shell.print("Used mem: %d KB\n",
-	// 			page_frame_manager.getUsedMemorySize() / 1024);
-	// auto free_mem =
-	// memorySizeFormatter(page_frame_manager.getFreeMemorySize());
-	// shell.print("Free mem: %d MB %d KB\n", free_mem.mega_bytes,
-	// 			free_mem.kilo_bytes);
-	// auto resv_mem =
-	// 	memorySizeFormatter(page_frame_manager.getReservedMemorySize());
-	// shell.print("Reserved mem: %d MB %d KB\n", resv_mem.mega_bytes,
-	// 			resv_mem.kilo_bytes);
 
 	/* START: set idt */
 	idtr.limit = 0x0fff;
@@ -123,7 +107,30 @@ extern "C" void _start(BootParamter *boot_param) {
 	OS_IO_Manager = &io_handler_manager;
 	/* END: setup io manager */
 
+	shell.println("New page map now!");
+	shell.println("Hello from kernel!");
+	shell.getShellInfo();
+	shell.println("Frame size: %d, raw num: %d", boot_param->framebuffer_size,
+				  boot_param->width * boot_param->height);
+	// shell.deleteChar(0, 3);
+	// shell.print("Used mem: %d KB\n",
+	// 			page_frame_manager.getUsedMemorySize() / 1024);
+	// auto free_mem =
+	// memorySizeFormatter(page_frame_manager.getFreeMemorySize());
+	// shell.print("Free mem: %d MB %d KB\n", free_mem.mega_bytes,
+	// 			free_mem.kilo_bytes);
+	// auto resv_mem =
+	// 	memorySizeFormatter(page_frame_manager.getReservedMemorySize());
+	// shell.print("Reserved mem: %d MB %d KB\n", resv_mem.mega_bytes,
+	// 			resv_mem.kilo_bytes);
+
 	/* spin */
-	while (1)
-		;
+	shell.display();
+	while (1) {
+		if (screen_manager.request_draw) {
+			screen_manager.request_draw = false;
+			screen_manager.clearScreen();
+			shell.display();
+		}
+	}
 }

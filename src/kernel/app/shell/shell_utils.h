@@ -25,4 +25,7 @@ struct ShellRowColInfo {
 struct ShellCursor {
 	uint32_t at_row;
 	uint32_t at_col;
+	uint32_t padding_vertical;
+	uint32_t padding_left;
+	uint32_t thickness;
 };

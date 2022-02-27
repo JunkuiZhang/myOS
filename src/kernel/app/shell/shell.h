@@ -20,18 +20,16 @@ class Shell {
 	bool scroll_indicator;
 	uint32_t row_pointer_list[128];
 	uint32_t total_row_num;
-	uint32_t draw_string_pointer;
 
 	ShellCursor shell_cursor;
 
 	unsigned char *matchChar(char c);
 	void pushCol();
 	void pushRow();
-	void getCharIndex(uint32_t row, uint32_t col, uint32_t *result);
+	// void getCharIndex(uint32_t row, uint32_t col, uint32_t *result);
 	void stringPreprocess(const char *str, va_list args);
 	void charBufferPush(char new_char, char *buffer_pointer,
 						uint32_t *buffer_index);
-	void plainPrint();
 	void drawChar(char this_char, bool draw_background);
 
   public:
@@ -41,12 +39,15 @@ class Shell {
 	Shell();
 	~Shell();
 
+	void drawCursor();
 	void print(const char *str, ...);
 	void println(const char *str, ...);
 	void putchar(char c);
-	void deleteChar(uint32_t row, uint32_t col);
+	void deleteChar();
 
 	void getShellInfo();
+	void display();
+	void clearBuffer();
 };
 
 extern Shell *OS_SHELL;
