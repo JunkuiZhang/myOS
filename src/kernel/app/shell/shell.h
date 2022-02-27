@@ -51,6 +51,10 @@ class Shell {
 	Shell(unsigned int *bbase, unsigned int resolution_hor,
 		  unsigned int resolution_ver, unsigned int foreground_color,
 		  unsigned int background_colo);
+	Shell();
+	// void init(unsigned int *bbase, unsigned int resolution_hor,
+	// 		  unsigned int resolution_ver, unsigned int foreground_color,
+	// 		  unsigned int background_colo);
 	~Shell();
 
 	void print(const char *str, ...);
@@ -58,3 +62,5 @@ class Shell {
 
 	void getShellInfo();
 };
+
+extern Shell *OS_SHELL;

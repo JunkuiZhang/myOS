@@ -67,11 +67,11 @@ build/kernel/main.o: src/kernel/main.cpp
 
 build/kernel/%.o: src/kernel/%.cpp
 	@mkdir -p $(@D)
-	clang -target x86_64-elf -fno-stack-protector -fno-stack-check -fno-exceptions -D__x86_64__ -I. -c $(patsubst build/kernel/%.o, src/kernel/%.cpp, $(OBJ)) -o $@
+	clang -target x86_64-elf -fno-stack-protector -fno-stack-check -fno-exceptions -D__x86_64__ -I. -c $^ -o $@
 
 build/kernel/%_asm.o: src/kernel/%.asm
 	@mkdir -p $(@D)
-	nasm $(patsubst build/kernel/%_asm.o, src/kernel/%.asm, $(ASMOBJ)) -f elf64 -o $@
+	nasm $^ -f elf64 -o $@
 
 build/myos_img/kernel.elf: build/kernel/main.o $(OBJ) $(ASMOBJ)
 	ld.lld -nostdlib -z max-page-size=0x1000 -T src/kernel/kernel.ld -o $@ $^

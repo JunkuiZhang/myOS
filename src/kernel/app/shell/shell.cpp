@@ -1,5 +1,7 @@
 #include "shell.h"
 
+Shell *OS_SHELL;
+
 Shell::Shell(unsigned int *bbase, unsigned int resolution_hor,
 			 unsigned int resolution_ver, unsigned int foreground_color,
 			 unsigned int background_color) {
@@ -27,6 +29,36 @@ Shell::Shell(unsigned int *bbase, unsigned int resolution_hor,
 	scroll_indicator = false;
 	draw_string_pointer = 0;
 }
+
+Shell::Shell() {}
+
+// void Shell::init(unsigned int *bbase, unsigned int resolution_hor,
+// 				 unsigned int resolution_ver, unsigned int foreground_color,
+// 				 unsigned int background_colo) {
+// 	font_info.raw_data = FONT_DATA;
+// 	font_info.bytes_per_word = 24;
+// 	font_info.font_width = 12;
+// 	font_info.font_height = 16;
+// 	shell_horizontal_pixel = (uint32_t)resolution_hor;
+// 	padding = PaddingPixel{15, 15, 12, 12, 3};
+// 	shell_vertical_pixel = (uint32_t)resolution_ver;
+// 	buffer_base = bbase;
+// 	row_col_info.max_row = (shell_vertical_pixel - padding.top -
+// 							padding.bottom - font_info.font_height) /
+// 						   (font_info.font_height + 2 * padding.between);
+// 	row_col_info.max_col = (shell_horizontal_pixel - padding.leading -
+// 							padding.trailing - font_info.font_width) /
+// 						   font_info.font_width;
+// 	row_col_info.current_row = 0;
+// 	row_col_info.current_col = 0;
+// 	font_foreground_color = foreground_color;
+// 	font_background_color = background_color;
+
+// 	total_string_index = 0;
+// 	total_row_num = 0;
+// 	scroll_indicator = false;
+// 	draw_string_pointer = 0;
+// }
 
 Shell::~Shell() {}
 

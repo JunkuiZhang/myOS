@@ -1,11 +1,15 @@
 #include "screen.h"
 
+ScreenManager *OS_SCREEN_MANAGER;
+
 ScreenManager::ScreenManager(unsigned int *framebuffer_base,
 							 uint32_t screen_width, uint32_t screen_height) {
 	framebuffer = framebuffer_base;
 	width = screen_width;
 	height = screen_height;
 }
+
+ScreenManager::ScreenManager() {}
 
 ScreenManager::~ScreenManager() {}
 

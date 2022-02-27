@@ -11,7 +11,10 @@ class ScreenManager {
   public:
 	ScreenManager(unsigned int *framebuffer_base, uint32_t screen_width,
 				  uint32_t screen_height);
+	ScreenManager();
 	~ScreenManager();
 
 	void clearScreen(unsigned int target_color);
 };
+
+extern ScreenManager *OS_SCREEN_MANAGER;
