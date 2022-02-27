@@ -9,56 +9,34 @@ Shell::Shell(unsigned int *bbase, unsigned int resolution_hor,
 	font_info.bytes_per_word = 24;
 	font_info.font_width = 12;
 	font_info.font_height = 16;
-	shell_horizontal_pixel = (uint32_t)resolution_hor;
+	size.width = (uint32_t)resolution_hor;
+	size.height = (uint32_t)resolution_ver;
+	size.total_pixel_num = size.width * size.height;
 	padding = PaddingPixel{15, 15, 12, 12, 3};
-	shell_vertical_pixel = (uint32_t)resolution_ver;
 	buffer_base = bbase;
-	row_col_info.max_row = (shell_vertical_pixel - padding.top -
-							padding.bottom - font_info.font_height) /
-						   (font_info.font_height + 2 * padding.between);
-	row_col_info.max_col = (shell_horizontal_pixel - padding.leading -
-							padding.trailing - font_info.font_width) /
+	row_col_info.max_row =
+		(size.height - padding.top - padding.bottom - font_info.font_height) /
+		(font_info.font_height + 2 * padding.between);
+	row_col_info.max_col = (size.width - padding.leading - padding.trailing -
+							font_info.font_width) /
 						   font_info.font_width;
 	row_col_info.current_row = 0;
 	row_col_info.current_col = 0;
 	font_foreground_color = foreground_color;
 	font_background_color = background_color;
 
+	shell_cursor.at_row = 0;
+	shell_cursor.at_col = 0;
+
 	total_string_index = 0;
 	total_row_num = 0;
 	scroll_indicator = false;
 	draw_string_pointer = 0;
+	temp_string_index = 0;
+	row_pointer_list[0] = 0;
 }
 
 Shell::Shell() {}
-
-// void Shell::init(unsigned int *bbase, unsigned int resolution_hor,
-// 				 unsigned int resolution_ver, unsigned int foreground_color,
-// 				 unsigned int background_colo) {
-// 	font_info.raw_data = FONT_DATA;
-// 	font_info.bytes_per_word = 24;
-// 	font_info.font_width = 12;
-// 	font_info.font_height = 16;
-// 	shell_horizontal_pixel = (uint32_t)resolution_hor;
-// 	padding = PaddingPixel{15, 15, 12, 12, 3};
-// 	shell_vertical_pixel = (uint32_t)resolution_ver;
-// 	buffer_base = bbase;
-// 	row_col_info.max_row = (shell_vertical_pixel - padding.top -
-// 							padding.bottom - font_info.font_height) /
-// 						   (font_info.font_height + 2 * padding.between);
-// 	row_col_info.max_col = (shell_horizontal_pixel - padding.leading -
-// 							padding.trailing - font_info.font_width) /
-// 						   font_info.font_width;
-// 	row_col_info.current_row = 0;
-// 	row_col_info.current_col = 0;
-// 	font_foreground_color = foreground_color;
-// 	font_background_color = background_color;
-
-// 	total_string_index = 0;
-// 	total_row_num = 0;
-// 	scroll_indicator = false;
-// 	draw_string_pointer = 0;
-// }
 
 Shell::~Shell() {}
 
@@ -81,16 +59,26 @@ void Shell::pushRow() {
 	if (row_col_info.current_row > row_col_info.max_row) {
 		row_col_info.current_row--;
 		// clear screen
-		for (uint32_t i = 0; i < shell_vertical_pixel * shell_horizontal_pixel;
-			 i++) {
+		for (uint32_t i = 0; i < size.total_pixel_num; i++) {
 			buffer_base[i] = 0xff002244;
 		}
 		draw_string_pointer =
 			row_pointer_list[total_row_num - row_col_info.max_row];
 		row_col_info.current_row = 0;
 		row_col_info.current_col = 0;
-		plainPrint();
+		/* draw from here */
+		for (uint32_t x = draw_string_pointer; x < total_string_index; x++) {
+			char current = total_string_data[x];
+			drawChar(current, true);
+		}
 	}
+}
+
+void Shell::getCharIndex(uint32_t row, uint32_t col, uint32_t *result) {
+	if (row < 0 || row > row_col_info.max_row || col < 0 ||
+		col > row_col_info.max_col)
+		return;
+	*result = row_pointer_list[row] + col;
 }
 
 void Shell::charBufferPush(char new_char, char *buffer_pointer,
@@ -103,9 +91,7 @@ void Shell::stringPreprocess(const char *str, va_list args) {
 	uint32_t string_index;
 	char current_char;
 
-	char temp_str_buffer[256];
 	char temp_arg_buffer[20];
-	uint32_t temp_str_index = 0;
 	for (string_index = 0;; string_index++) {
 		current_char = str[string_index];
 		if (current_char == 0) {
@@ -132,8 +118,8 @@ void Shell::stringPreprocess(const char *str, va_list args) {
 					have_printed = true;
 				}
 				for (int x = indicator - 1; x >= 0; x--) {
-					charBufferPush(temp_arg_buffer[x], temp_str_buffer,
-								   &temp_str_index);
+					charBufferPush(temp_arg_buffer[x], temp_string_data,
+								   &temp_string_index);
 				}
 				continue;
 			}
@@ -156,8 +142,8 @@ void Shell::stringPreprocess(const char *str, va_list args) {
 					have_printed = true;
 				}
 				for (int x = indicator - 1; x >= 0; x--) {
-					charBufferPush(temp_arg_buffer[x], temp_str_buffer,
-								   &temp_str_index);
+					charBufferPush(temp_arg_buffer[x], temp_string_data,
+								   &temp_string_index);
 				}
 				continue;
 			}
@@ -166,18 +152,18 @@ void Shell::stringPreprocess(const char *str, va_list args) {
 				char *temp_string;
 				temp_string = va_arg(args, char *);
 				while (temp_string[indicator] != 0) {
-					charBufferPush(temp_string[indicator], temp_str_buffer,
-								   &temp_str_index);
+					charBufferPush(temp_string[indicator], temp_string_data,
+								   &temp_string_index);
 					indicator++;
 				}
 				continue;
 			}
 		} else {
-			charBufferPush(current_char, temp_str_buffer, &temp_str_index);
+			charBufferPush(current_char, temp_string_data, &temp_string_index);
 		}
 	}
-	for (uint32_t x = 0; x < temp_str_index; x++) {
-		charBufferPush(temp_str_buffer[x], total_string_data,
+	for (uint32_t x = 0; x < temp_string_index; x++) {
+		charBufferPush(temp_string_data[x], total_string_data,
 					   &total_string_index);
 	}
 }
@@ -187,40 +173,55 @@ void Shell::print(const char *str, ...) {
 	va_start(args, str);
 	stringPreprocess(str, args);
 	va_end(args);
-	plainPrint();
+	for (uint32_t x = 0; x < temp_string_index; x++) {
+		char current_char = temp_string_data[x];
+		putchar(current_char);
+	}
+	temp_string_index = 0;
+}
+
+void Shell::println(const char *str, ...) {
+	va_list args;
+	va_start(args, str);
+	stringPreprocess(str, args);
+	va_end(args);
+	for (uint32_t x = 0; x < temp_string_index; x++) {
+		char current_char = temp_string_data[x];
+		putchar(current_char);
+	}
+	temp_string_index = 0;
+	putchar('\n');
 }
 
 void Shell::plainPrint() {
-	while (1) {
-		char current_char = total_string_data[draw_string_pointer];
-		if (draw_string_pointer >= total_string_index) {
-			break;
-		}
+	for (uint32_t x = 0; x < temp_string_index; x++) {
+		char current_char = temp_string_data[x];
 		putchar(current_char);
 	}
+	temp_string_index = 0;
 }
 
 void Shell::putchar(char c) {
-	if (c == ' ') {
+	charBufferPush(c, total_string_data, &total_string_index);
+	drawChar(c, false);
+}
+
+void Shell::drawChar(char this_char, bool draw_background) {
+	if (this_char == ' ') {
 		draw_string_pointer++;
 		pushCol();
 		return;
 	}
-	if (c == '\r' || c == '\n') {
+	if (this_char == '\r' || this_char == '\n') {
 		draw_string_pointer++;
 		pushRow();
 		return;
 	}
-	drawChar(c, false);
-	return;
-}
-
-void Shell::drawChar(char this_char, bool draw_background) {
 	// pixel before current row
 	uint32_t pixel_offset = (row_col_info.current_row *
 								 (font_info.font_height + 2 * padding.between) +
 							 padding.top) *
-								shell_horizontal_pixel +
+								size.width +
 							row_col_info.current_col * font_info.font_width +
 							padding.leading;
 
@@ -234,7 +235,7 @@ void Shell::drawChar(char this_char, bool draw_background) {
 				((8 * byte_index) + bit_index) / font_info.font_width;
 			uint32_t bit_col =
 				((8 * byte_index) + bit_index) % font_info.font_width;
-			temp_offset = shell_horizontal_pixel * bit_row + bit_col;
+			temp_offset = size.width * bit_row + bit_col;
 			temp_offset += pixel_offset;
 			if (char_data[byte_index] & bit_mask) {
 				*((unsigned int *)(buffer_base + temp_offset)) =
@@ -253,4 +254,23 @@ void Shell::drawChar(char this_char, bool draw_background) {
 void Shell::getShellInfo() {
 	print("Shell row: %d, col: %d\n", row_col_info.max_row,
 		  row_col_info.max_col);
+}
+
+void Shell::deleteChar(uint32_t row, uint32_t col) {
+	if (row < 0 || row > row_col_info.max_row)
+		return;
+	uint32_t total_size = total_string_index - 1;
+	uint32_t *char_index = nullptr;
+	getCharIndex(row, col, char_index);
+	if (char_index == nullptr)
+		return;
+	row_col_info.current_col = col;
+	row_col_info.current_row = row;
+	draw_string_pointer = *char_index;
+	total_string_index = *char_index;
+	for (uint32_t x = *char_index; x < total_size; x++) {
+		char next_char = total_string_data[x + 1];
+		charBufferPush(next_char, total_string_data, &total_string_index);
+		drawChar(next_char, true);
+	}
 }

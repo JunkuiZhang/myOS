@@ -2,6 +2,8 @@
 #include "./video/screen.h"
 #include "app/shell/shell.h"
 #include "boot_param.h"
+#include "drivers/io.h"
+#include "drivers/io_manager.h"
 #include "gdt/gdt.h"
 #include "interrupts/idt.h"
 #include "interrupts/interrupts.h"
@@ -62,21 +64,22 @@ extern "C" void _start(BootParamter *boot_param) {
 					   boot_param->height, 0xffffffff, 0xff002255);
 	OS_SHELL = &shell;
 
-	shell.print("New page map now!\n");
-	shell.print("Hello from kernel!\n");
+	shell.println("New page map now!");
+	shell.println("Hello from kernel!");
 	shell.getShellInfo();
-	shell.print("Frame size: %d, raw num: %d\n", boot_param->framebuffer_size,
-				boot_param->width * boot_param->height);
-
-	shell.print("Used mem: %d KB\n",
-				page_frame_manager.getUsedMemorySize() / 1024);
-	auto free_mem = memorySizeFormatter(page_frame_manager.getFreeMemorySize());
-	shell.print("Free mem: %d MB %d KB\n", free_mem.mega_bytes,
-				free_mem.kilo_bytes);
-	auto resv_mem =
-		memorySizeFormatter(page_frame_manager.getReservedMemorySize());
-	shell.print("Reserved mem: %d MB %d KB\n", resv_mem.mega_bytes,
-				resv_mem.kilo_bytes);
+	shell.println("Frame size: %d, raw num: %d", boot_param->framebuffer_size,
+				  boot_param->width * boot_param->height);
+	shell.deleteChar(0, 3);
+	// shell.print("Used mem: %d KB\n",
+	// 			page_frame_manager.getUsedMemorySize() / 1024);
+	// auto free_mem =
+	// memorySizeFormatter(page_frame_manager.getFreeMemorySize());
+	// shell.print("Free mem: %d MB %d KB\n", free_mem.mega_bytes,
+	// 			free_mem.kilo_bytes);
+	// auto resv_mem =
+	// 	memorySizeFormatter(page_frame_manager.getReservedMemorySize());
+	// shell.print("Reserved mem: %d MB %d KB\n", resv_mem.mega_bytes,
+	// 			resv_mem.kilo_bytes);
 
 	/* START: set idt */
 	idtr.limit = 0x0fff;
@@ -101,14 +104,24 @@ extern "C" void _start(BootParamter *boot_param) {
 	int_general_protection_fault->type_attr = IDT_TA_InterruptGate;
 	int_general_protection_fault->selector = 0x08;
 
+	IDTDescEntry *int_keyboard =
+		(IDTDescEntry *)(idtr.offset + 0x21 * sizeof(IDTDescEntry));
+	int_keyboard->setOffset((uint64_t)keyboardIntHandler);
+	int_keyboard->type_attr = IDT_TA_InterruptGate;
+	int_keyboard->selector = 0x08;
+
 	asm("lidt %0" : : "m"(idtr));
 	/* END: set idt */
 
-	for (uint64_t x = 0; x < 10; x++) {
-		shell.print("ROW: %d\n", x);
-	}
+	remapPIC();
+	outByte(PIC1_DATA, 0b11111101);
+	outByte(PIC2_DATA, 0b11111111);
+	asm("sti"); // enable mask interrupts, "cli" to cancel
 
-	asm("int $0x0e");
+	/* START: setup io manager */
+	IOHandlerManager io_handler_manager = IOHandlerManager();
+	OS_IO_Manager = &io_handler_manager;
+	/* END: setup io manager */
 
 	/* spin */
 	while (1)
