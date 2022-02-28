@@ -29,9 +29,9 @@ ASMOBJ = $(patsubst src/kernel/%.asm, build/kernel/%_asm.o, $(ASMSRC))
 
 run: build/myos_img/EFI/BOOT/BootX64.efi build/myos_img/kernel.elf
 # run: build/myos_img/EFI/BOOT/BootX64.efi esp_directory
-	qemu-system-x86_64 -net none \
-	-drive if=pflash,format=raw,file=$(BIOS_CODE),readonly=on \
-	-drive if=pflash,format=raw,file=$(BIOS_VARS),readonly=on \
+	qemu-system-x86_64 -machine q35 -cpu qemu64 -net none \
+	-drive if=pflash,format=raw,unit=0,file=$(BIOS_CODE),readonly=on \
+	-drive if=pflash,format=raw,unit=1,file=$(BIOS_VARS),readonly=on \
 	-drive format=raw,file=fat:rw:build/myos_img
 
 build/bootloader/main.o: src/bootloader/main.c

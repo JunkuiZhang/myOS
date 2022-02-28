@@ -78,6 +78,14 @@ GOPInfo *initializeGOP() {
 	return &gop_info;
 }
 
+UINTN stringCompare(CHAR8 *str1, CHAR8 *str2, UINTN length) {
+	for (UINTN x = 0; x < length; x++) {
+		if (str1[x] != str2[x])
+			return 0;
+	}
+	return 1;
+}
+
 typedef struct {
 	unsigned int *framebuffer;
 	unsigned int width;
@@ -86,6 +94,7 @@ typedef struct {
 	EFI_MEMORY_DESCRIPTOR *mem_map;
 	UINTN mem_map_size;
 	UINTN mem_desc_size;
+	void *rsdp; /* root system descriptor pointer */
 } BootParamater;
 
 EFI_STATUS
@@ -198,50 +207,59 @@ efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table) {
 	void (*kernel_entry)(BootParamater *) = ((__attribute__((
 		sysv_abi)) void (*)(BootParamater *))kernel_file_header.e_entry);
 
-	while (1) {
-		/* get memory map */
-		Print(L"Reading memory map.\n");
-		EFI_MEMORY_DESCRIPTOR *memory_map = NULL;
-		UINTN map_size = 0;
-		UINTN map_key = 0;
-		UINTN desc_size = 0;
-		{
-			status = uefi_call_wrapper(BS->GetMemoryMap, 5, &map_size,
-									   memory_map, &map_key, &desc_size, NULL);
-			if (status != EFI_BUFFER_TOO_SMALL || !map_size) {
-				Print(L"Unable to init memory map. ERROR: %d\n",
-					  status & 0xffff);
-			}
-			Print(L"Memory map size: %d\n", map_size);
-			map_size += 4 * desc_size;
-			status = uefi_call_wrapper(BS->AllocatePool, 3, EfiLoaderData,
-									   map_size, (void **)&memory_map);
-			if (!memory_map) {
-				Print(L"Unable to allocate memory map. ERROR: %d\n",
-					  status & 0xffff);
-			}
-			status = uefi_call_wrapper(BS->GetMemoryMap, 5, &map_size,
-									   memory_map, &map_key, &desc_size, NULL);
-			if (EFI_ERROR(status)) {
-				Print(L"Unable to get memory map. ERROR: %d\n",
-					  status & 0xffff);
-			}
-			Print(L"Memory map read. map key: %d\n", map_key);
+	/* get memory map */
+	Print(L"Reading memory map.\n");
+	EFI_MEMORY_DESCRIPTOR *memory_map = NULL;
+	UINTN map_size = 0;
+	UINTN map_key = 0;
+	UINTN desc_size = 0;
+	{
+		status = uefi_call_wrapper(BS->GetMemoryMap, 5, &map_size, memory_map,
+								   &map_key, &desc_size, NULL);
+		if (status != EFI_BUFFER_TOO_SMALL || !map_size) {
+			Print(L"Unable to init memory map. ERROR: %d\n", status & 0xffff);
 		}
-
-		boot_param.mem_map = memory_map;
-		boot_param.mem_map_size = map_size;
-		boot_param.mem_desc_size = desc_size;
-		EFI_MEMORY_DESCRIPTOR *temp = (EFI_MEMORY_DESCRIPTOR *)memory_map;
-		Print(L"Memory type: %d\n", temp[0].Type);
-
-		status =
-			uefi_call_wrapper(BS->ExitBootServices, 2, image_handle, map_key);
+		Print(L"Memory map size: %d\n", map_size);
+		map_size += 4 * desc_size;
+		status = uefi_call_wrapper(BS->AllocatePool, 3, EfiLoaderData, map_size,
+								   (void **)&memory_map);
+		if (!memory_map) {
+			Print(L"Unable to allocate memory map. ERROR: %d\n",
+				  status & 0xffff);
+		}
+		status = uefi_call_wrapper(BS->GetMemoryMap, 5, &map_size, memory_map,
+								   &map_key, &desc_size, NULL);
 		if (EFI_ERROR(status)) {
-			Print(L"Exit BS failed! ERROR: %d\n", status & 0xffff);
+			Print(L"Unable to get memory map. ERROR: %d\n", status & 0xffff);
 		}
+		Print(L"Memory map read. map key: %d\n", map_key);
+	}
 
-		break;
+	boot_param.mem_map = memory_map;
+	boot_param.mem_map_size = map_size;
+	boot_param.mem_desc_size = desc_size;
+
+	EFI_CONFIGURATION_TABLE *config_table = ST->ConfigurationTable;
+	void *rsdp = NULL;
+	EFI_GUID acpi2_table_guid = ACPI_20_TABLE_GUID;
+	for (UINTN x = 0; x < ST->NumberOfTableEntries; x++) {
+		// UINTN indicator = uefi_call_wrapper(
+		// 	CompareGuid, 2, &config_table[x].VendorGuid, &acpi2_table_guid);
+		UINTN indicator =
+			CompareGuid(&config_table[x].VendorGuid, &acpi2_table_guid);
+		if (indicator) {
+			if (stringCompare((CHAR8 *)"RSD PTR ",
+							  (CHAR8 *)config_table->VendorTable, 8)) {
+				rsdp = (void *)config_table->VendorTable;
+				break;
+			}
+		}
+	}
+	boot_param.rsdp = rsdp;
+
+	status = uefi_call_wrapper(BS->ExitBootServices, 2, image_handle, map_key);
+	if (EFI_ERROR(status)) {
+		Print(L"Exit BS failed! ERROR: %d\n", status & 0xffff);
 	}
 
 	kernel_entry(&boot_param);

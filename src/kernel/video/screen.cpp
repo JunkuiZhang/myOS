@@ -16,7 +16,9 @@ ScreenManager::ScreenManager() {}
 
 ScreenManager::~ScreenManager() {}
 
-void ScreenManager::update() { request_draw = true; }
+void ScreenManager::update() {
+	// request_draw = true;
+}
 
 void ScreenManager::clearScreen() {
 	for (uint32_t i = 0; i < width * height; i++) {

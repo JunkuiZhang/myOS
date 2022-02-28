@@ -1,5 +1,7 @@
 #include "pageframe_alloc.h"
 
+PageFrameAllocator *OS_PAGEFRAME_ALLOCATOR;
+
 PageFrameAllocator::PageFrameAllocator(EfiMemoryDescriptor *memory_map,
 									   size_t map_size, size_t desc_size) {
 	uint64_t map_entries = map_size / desc_size;
@@ -31,16 +33,19 @@ PageFrameAllocator::PageFrameAllocator(EfiMemoryDescriptor *memory_map,
 
 	/* init bitmap */
 	page_bitmap.init(bitmap_size, (uint8_t *)largest_free_memory_segment);
-	/* lock the bitmap pages */
-	lockPages(&page_bitmap, bitmap_size / 4096 + 1);
+	reservePages(0, memory_map_size_bytes / 4096 + 1);
 	/* reserve the unusable && reserved memory */
 	for (uint64_t x = 0; x < map_entries; x++) {
 		EfiMemoryDescriptor *desc =
 			(EfiMemoryDescriptor *)((uint64_t)memory_map + x * desc_size);
-		if (desc->Type != 7) {
-			reservePages((void *)desc->PhysicalStart, desc->NumberOfPages);
+		if (desc->Type == 7) {
+			unreservePages((void *)desc->PhysicalStart, desc->NumberOfPages);
 		}
 	}
+	/* reserve 0 - 0x100_000, to avoid bugs */
+	reservePages(0, 0x100);
+	/* lock the bitmap pages */
+	lockPages(&page_bitmap.buffer, bitmap_size / 4096 + 1);
 }
 
 void PageFrameAllocator::freePage(void *address) {
@@ -140,5 +145,7 @@ void *PageFrameAllocator::requestPage() {
 	// TODO: page swap
 	return NULL;
 }
+
+PageFrameAllocator::PageFrameAllocator() {}
 
 PageFrameAllocator::~PageFrameAllocator() {}

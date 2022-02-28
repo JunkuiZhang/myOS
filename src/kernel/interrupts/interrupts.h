@@ -19,6 +19,7 @@ __attribute__((interrupt)) void
 generalProtectionFalutHandler(struct interrupt_frame *frame);
 __attribute__((interrupt)) void
 keyboardIntHandler(struct interrupt_frame *frame);
+__attribute__((interrupt)) void pitIntHandler(struct interrupt_frame *frame);
 
 void remapPIC();
 void endPICMaster();

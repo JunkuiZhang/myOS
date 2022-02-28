@@ -11,7 +11,7 @@ class Shell {
 	unsigned int *buffer_base;
 	ShellRowColInfo row_col_info;
 	unsigned int font_foreground_color;
-	unsigned int font_background_color;
+	unsigned int screen_background_color;
 
 	char total_string_data[1024 * 4];
 	uint32_t total_string_index;
@@ -26,11 +26,11 @@ class Shell {
 	unsigned char *matchChar(char c);
 	void pushCol();
 	void pushRow();
-	// void getCharIndex(uint32_t row, uint32_t col, uint32_t *result);
 	void stringPreprocess(const char *str, va_list args);
 	void charBufferPush(char new_char, char *buffer_pointer,
 						uint32_t *buffer_index);
 	void drawChar(char this_char, bool draw_background);
+	void updateBufferAndDraw();
 
   public:
 	Shell(unsigned int *bbase, unsigned int resolution_hor,
@@ -46,7 +46,6 @@ class Shell {
 	void deleteChar();
 
 	void getShellInfo();
-	void display();
 	void clearBuffer();
 };
 

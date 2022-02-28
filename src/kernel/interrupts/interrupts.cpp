@@ -4,6 +4,7 @@
 #include "../drivers/io_manager.h"
 #include "../drivers/keyboard.h"
 #include "../ints_handler/panic.h"
+#include "../scheduling/pit/pit.h"
 #include <stdint.h>
 
 __attribute__((interrupt)) void
@@ -31,6 +32,11 @@ __attribute__((interrupt)) void
 keyboardIntHandler(struct interrupt_frame *frame) {
 	uint8_t scancode = inByte(0x60);
 	OS_IO_Manager->handleKeyboard(scancode);
+	endPICMaster();
+}
+
+__attribute__((interrupt)) void pitIntHandler(struct interrupt_frame *frame) {
+	PIT::tick();
 	endPICMaster();
 }
 
@@ -73,5 +79,4 @@ void remapPIC() {
 	outByte(PIC1_DATA, a1);
 	ioWait();
 	outByte(PIC2_DATA, a2);
-	ioWait();
 }

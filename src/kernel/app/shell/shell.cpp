@@ -23,7 +23,7 @@ Shell::Shell(unsigned int *bbase, unsigned int resolution_hor,
 	row_col_info.current_row = 0;
 	row_col_info.current_col = 0;
 	font_foreground_color = foreground_color;
-	font_background_color = background_color;
+	screen_background_color = background_color;
 
 	shell_cursor.at_row = 0;
 	shell_cursor.at_col = 0;
@@ -61,18 +61,10 @@ void Shell::pushRow() {
 	row_pointer_list[total_row_num] = total_string_index;
 	if (row_col_info.current_row > row_col_info.max_row) {
 		row_col_info.current_row--;
-		display();
 	}
 	shell_cursor.at_col = row_col_info.current_col;
 	shell_cursor.at_row = row_col_info.current_row;
 }
-
-// void Shell::getCharIndex(uint32_t row, uint32_t col, uint32_t *result) {
-// 	if (row < 0 || row > row_col_info.max_row || col < 0 ||
-// 		col > row_col_info.max_col)
-// 		return;
-// 	*result = row_pointer_list[row] + col;
-// }
 
 void Shell::charBufferPush(char new_char, char *buffer_pointer,
 						   uint32_t *buffer_index) {
@@ -166,11 +158,7 @@ void Shell::print(const char *str, ...) {
 	va_start(args, str);
 	stringPreprocess(str, args);
 	va_end(args);
-	for (uint32_t x = 0; x < temp_string_index; x++) {
-		char current_char = temp_string_data[x];
-		putchar(current_char);
-	}
-	temp_string_index = 0;
+	updateBufferAndDraw();
 }
 
 void Shell::println(const char *str, ...) {
@@ -178,12 +166,19 @@ void Shell::println(const char *str, ...) {
 	va_start(args, str);
 	stringPreprocess(str, args);
 	va_end(args);
+	charBufferPush('\n', temp_string_data, &temp_string_index);
+	updateBufferAndDraw();
+}
+
+void Shell::updateBufferAndDraw() {
+	uint32_t start_index = total_string_index;
 	for (uint32_t x = 0; x < temp_string_index; x++) {
-		char current_char = temp_string_data[x];
-		putchar(current_char);
+		char current = temp_string_data[x];
+		total_string_data[start_index + x] = current;
+		drawChar(current, false);
 	}
+	total_string_index += temp_string_index;
 	temp_string_index = 0;
-	putchar('\n');
 }
 
 void Shell::putchar(char c) {
@@ -223,7 +218,7 @@ void Shell::drawChar(char this_char, bool draw_background) {
 					font_foreground_color;
 			} else if (draw_background) {
 				*((unsigned int *)(buffer_base + temp_offset)) =
-					font_background_color;
+					screen_background_color;
 			}
 		}
 	}
@@ -297,23 +292,23 @@ void Shell::deleteChar() {
 	total_string_index -= 1;
 }
 
-void Shell::display() {
-	/* pre-set */
-	uint32_t draw_start_row = 0;
-	if (total_row_num > row_col_info.max_row) {
-		draw_start_row = total_row_num - row_col_info.max_row;
-	}
-	uint32_t draw_start_index = row_pointer_list[draw_start_row];
-	row_col_info.current_col = 0;
-	row_col_info.current_row = 0;
+// void Shell::display() {
+// 	/* pre-set */
+// 	uint32_t draw_start_row = 0;
+// 	if (total_row_num > row_col_info.max_row) {
+// 		draw_start_row = total_row_num - row_col_info.max_row;
+// 	}
+// 	uint32_t draw_start_index = row_pointer_list[draw_start_row];
+// 	row_col_info.current_col = 0;
+// 	row_col_info.current_row = 0;
 
-	for (uint32_t string_index = draw_start_index;
-		 string_index < total_string_index; string_index++) {
-		char current = total_string_data[string_index];
-		drawChar(current, false);
-	}
-	drawCursor();
-}
+// 	for (uint32_t string_index = draw_start_index;
+// 		 string_index < total_string_index; string_index++) {
+// 		char current = total_string_data[string_index];
+// 		drawChar(current, false);
+// 	}
+// 	drawCursor();
+// }
 
 void Shell::clearBuffer() {
 	for (uint32_t x = 0; x < total_string_index; x++) {

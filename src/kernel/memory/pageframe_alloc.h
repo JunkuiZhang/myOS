@@ -22,6 +22,7 @@ class PageFrameAllocator {
 
 	PageFrameAllocator(EfiMemoryDescriptor *memory_map, size_t map_size,
 					   size_t desc_size);
+	PageFrameAllocator();
 	~PageFrameAllocator();
 
 	void lockPage(void *address);
@@ -35,3 +36,5 @@ class PageFrameAllocator {
 
 	void *requestPage();
 };
+
+extern PageFrameAllocator *OS_PAGEFRAME_ALLOCATOR;

@@ -2,8 +2,10 @@
 #include "./video/screen.h"
 #include "app/shell/shell.h"
 #include "boot_param.h"
+#include "drivers/acpi.h"
 #include "drivers/io.h"
 #include "drivers/io_manager.h"
+#include "drivers/pci.h"
 #include "gdt/gdt.h"
 #include "interrupts/idt.h"
 #include "interrupts/interrupts.h"
@@ -12,13 +14,36 @@
 #include "memory/pageframe_alloc.h"
 #include "memory/pagemap_indexer.h"
 #include "memory/pagetable_manager.h"
+#include "scheduling/pit/pit.h"
 
 extern uint64_t __kernel_start;
 extern uint64_t __kernel_end;
 
 IDTR idtr;
 
+void setIDTGate(void *handler, uint8_t entry_offset, uint8_t type_attr,
+				uint8_t selector) {
+	IDTDescEntry *interrupt =
+		(IDTDescEntry *)(idtr.offset + entry_offset * sizeof(IDTDescEntry));
+	interrupt->setOffset((uint64_t)handler);
+	interrupt->type_attr = type_attr;
+	interrupt->selector = selector;
+}
+
 extern "C" void _start(BootParamter *boot_param) {
+	/* START: data setup */
+	const unsigned int background_color = 0xff002244;
+	uint64_t framebuffer_base = (uint64_t)boot_param->framebuffer;
+	auto screen_manager =
+		ScreenManager((unsigned int *)framebuffer_base, boot_param->width,
+					  boot_param->height, background_color);
+	screen_manager.clearScreen(background_color);
+	OS_SCREEN_MANAGER = &screen_manager;
+	auto shell = Shell((unsigned int *)(framebuffer_base), boot_param->width,
+					   boot_param->height, 0xffffffff, 0xff002255);
+	OS_SHELL = &shell;
+	/* START: data setup */
+
 	/* START: set gdt */
 	GDTDescriptor gdt_desc;
 	gdt_desc.size = sizeof(GDT) - 1;
@@ -26,79 +51,55 @@ extern "C" void _start(BootParamter *boot_param) {
 	loadGDT(&gdt_desc);
 	/* END: set gdt */
 
-	const unsigned int background_color = 0xff002244;
-
+	/* START: memory setup */
 	auto page_frame_manager =
 		PageFrameAllocator((EfiMemoryDescriptor *)boot_param->mem_map,
 						   boot_param->mem_map_size, boot_param->mem_desc_size);
-
+	OS_PAGEFRAME_ALLOCATOR = &page_frame_manager;
 	auto kernel_size = (uint64_t)&__kernel_end - (uint64_t)&__kernel_start;
 	auto kernel_pages = kernel_size / 4096 + 1;
+
 	page_frame_manager.lockPages(&__kernel_start, kernel_pages);
 
 	PageTable *pml4 = (PageTable *)page_frame_manager.requestPage();
 	memset(pml4, 0, 4096);
 
 	auto page_table_manager = PageTableManager(pml4);
+	OS_PAGETABLE_MANAGER = &page_table_manager;
 	for (uint64_t x = 0; x < page_frame_manager.memory_size; x += 0x1000) {
-		page_table_manager.mapMemory((void *)x, (void *)x, &page_frame_manager);
+		page_table_manager.mapMemory((void *)x, (void *)x);
 	}
 
-	uint64_t framebuffer_base = (uint64_t)boot_param->framebuffer;
 	uint64_t framebuffer_size = boot_param->framebuffer_size + 0x1000;
-	for (uint64_t x = framebuffer_base; x < framebuffer_base + framebuffer_size;
-		 x += 4096) {
-		page_table_manager.mapMemory((void *)x, (void *)x, &page_frame_manager);
-	}
 	page_frame_manager.lockPages((void *)framebuffer_base,
 								 framebuffer_size / 4096 + 1);
+	for (uint64_t x = framebuffer_base; x < framebuffer_base + framebuffer_size;
+		 x += 4096) {
+		page_table_manager.mapMemory((void *)x, (void *)x);
+	}
 
 	asm("mov %0, %%cr3" : : "r"(pml4));
+	/* END: memory setup */
 
-	auto screen_manager =
-		ScreenManager((unsigned int *)framebuffer_base, boot_param->width,
-					  boot_param->height, background_color);
-	screen_manager.clearScreen(background_color);
-	OS_SCREEN_MANAGER = &screen_manager;
+	/* START: heap setup */
+	/* END: heap setup */
 
-	auto shell = Shell((unsigned int *)framebuffer_base, boot_param->width,
-					   boot_param->height, 0xffffffff, 0xff002255);
-	OS_SHELL = &shell;
-
-	/* START: set idt */
+	/* START: interrupts setup */
 	idtr.limit = 0x0fff;
 	idtr.offset = (uint64_t)page_frame_manager.requestPage();
 
-	IDTDescEntry *int_pagefault =
-		(IDTDescEntry *)(idtr.offset + 0xe * sizeof(IDTDescEntry));
-	int_pagefault->setOffset((uint64_t)pageFalutHandler);
-	int_pagefault->type_attr = IDT_TA_InterruptGate;
-	int_pagefault->selector = 0x08;
-
-	IDTDescEntry *int_doublefault =
-		(IDTDescEntry *)(idtr.offset + 0x8 * sizeof(IDTDescEntry));
-	int_doublefault->setOffset((uint64_t)doubleFalutHandler);
-	int_doublefault->type_attr = IDT_TA_InterruptGate;
-	int_doublefault->selector = 0x08;
-
-	IDTDescEntry *int_general_protection_fault =
-		(IDTDescEntry *)(idtr.offset + 0xd * sizeof(IDTDescEntry));
-	int_general_protection_fault->setOffset(
-		(uint64_t)generalProtectionFalutHandler);
-	int_general_protection_fault->type_attr = IDT_TA_InterruptGate;
-	int_general_protection_fault->selector = 0x08;
-
-	IDTDescEntry *int_keyboard =
-		(IDTDescEntry *)(idtr.offset + 0x21 * sizeof(IDTDescEntry));
-	int_keyboard->setOffset((uint64_t)keyboardIntHandler);
-	int_keyboard->type_attr = IDT_TA_InterruptGate;
-	int_keyboard->selector = 0x08;
+	setIDTGate((void *)pageFalutHandler, 0xe, IDT_TA_InterruptGate, 0x08);
+	setIDTGate((void *)doubleFalutHandler, 0x8, IDT_TA_InterruptGate, 0x08);
+	setIDTGate((void *)generalProtectionFalutHandler, 0xd, IDT_TA_InterruptGate,
+			   0x08);
+	setIDTGate((void *)keyboardIntHandler, 0x21, IDT_TA_InterruptGate, 0x08);
+	setIDTGate((void *)pitIntHandler, 0x20, IDT_TA_InterruptGate, 0x08);
 
 	asm("lidt %0" : : "m"(idtr));
-	/* END: set idt */
-
 	remapPIC();
-	outByte(PIC1_DATA, 0b11111101);
+	/* END: interrupts setup */
+
+	outByte(PIC1_DATA, 0b11111100);
 	outByte(PIC2_DATA, 0b11111111);
 	asm("sti"); // enable mask interrupts, "cli" to cancel
 
@@ -106,6 +107,19 @@ extern "C" void _start(BootParamter *boot_param) {
 	IOHandlerManager io_handler_manager = IOHandlerManager();
 	OS_IO_Manager = &io_handler_manager;
 	/* END: setup io manager */
+
+	/* START: PIT setup */
+	PIT::setDivisor(2000);
+	/* END: PIT setup */
+
+	/* START: ACPI setup */
+	ACPI::SDTHeader *xsdt = (ACPI::SDTHeader *)(boot_param->rsdp->XSDT_address);
+	shell.println("ADDRESS: %d", (uint64_t)xsdt);
+	ACPI::MCFGHeader *mcfg =
+		(ACPI::MCFGHeader *)ACPI::findTable(xsdt, (char *)"MCFG");
+	PCI::enumeratePCI(mcfg);
+	// shell.println("MCFG: %d", (uint64_t)mcfg);
+	/* END: ACPI setup */
 
 	shell.println("New page map now!");
 	shell.println("Hello from kernel!");
@@ -123,14 +137,18 @@ extern "C" void _start(BootParamter *boot_param) {
 	// 	memorySizeFormatter(page_frame_manager.getReservedMemorySize());
 	// shell.print("Reserved mem: %d MB %d KB\n", resv_mem.mega_bytes,
 	// 			resv_mem.kilo_bytes);
+	for (uint64_t x = 0; x < 20; x++) {
+		shell.println("NUM: %d", x);
+		PIT::sleep_sec(10);
+	}
 
 	/* spin */
-	shell.display();
 	while (1) {
-		if (screen_manager.request_draw) {
-			screen_manager.request_draw = false;
-			screen_manager.clearScreen();
-			shell.display();
-		}
+		// if (screen_manager.request_draw) {
+		// 	screen_manager.request_draw = false;
+		// 	screen_manager.clearScreen();
+		// 	shell.display();
+		// }
+		;
 	}
 }

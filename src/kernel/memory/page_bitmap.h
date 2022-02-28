@@ -6,9 +6,10 @@
 class PageBitmap {
   private:
 	size_t size;
-	uint8_t *buffer;
 
   public:
+	uint8_t *buffer;
+
 	PageBitmap(size_t m_size, uint8_t *m_buffer);
 	PageBitmap();
 	~PageBitmap();
