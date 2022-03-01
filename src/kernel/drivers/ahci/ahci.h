@@ -51,10 +51,49 @@ struct HostBusAdapterMemory {
 	HostBusAdapterPort ports[1];
 };
 
+struct HBACommandHeader {
+	uint8_t command_fis_length : 5;
+	uint8_t atapi : 1;
+	uint8_t write : 1;
+	uint8_t prefetchable : 1;
+
+	uint8_t reset : 1;
+	uint8_t bist : 1;
+	uint8_t clear_busy : 1;
+	uint8_t reserved0 : 1;
+	uint8_t port_multiplier : 4;
+
+	uint16_t prdt_length;
+	uint32_t prdb_count;
+	uint32_t command_table_base_addr;
+	uint32_t command_table_base_addr_upper;
+	uint32_t reserved1[4];
+};
+
+class Port {
+  private:
+	uint8_t *buffer;
+
+	void startCommand();
+	void endCommand();
+
+  public:
+	uint8_t port_number;
+	HostBusAdapterPort *hba_port;
+	PortType port_type;
+
+	Port(/* args */);
+	~Port();
+
+	void configure();
+};
+
 class AHCIDriver {
   private:
 	PCI::PCIDeviceHeader *pci_base_address;
 	HostBusAdapterMemory *abar;
+	Port *ports[32];
+	uint8_t port_count;
 
 	void probePorts();
 
