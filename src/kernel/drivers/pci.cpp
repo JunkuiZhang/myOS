@@ -1,6 +1,8 @@
 #include "pci.h"
 #include "../app/shell/shell.h"
+#include "../memory/heap.h"
 #include "../memory/pagetable_manager.h"
+#include "ahci/ahci.h"
 
 namespace PCI {
 
@@ -21,6 +23,17 @@ void enumerateFunction(uint64_t device_addr, uint64_t function) {
 		getSubClassName(device_header->mclass, device_header->subclass),
 		getProgramInterfaceName(device_header->mclass, device_header->subclass,
 								device_header->program_interface));
+
+	switch (device_header->mclass) {
+	case 0x01: /* mass storage controller */
+		switch (device_header->subclass) {
+		case 0x06: /* serial ATA */
+			switch (device_header->program_interface) {
+			case 0x01: /* AHCI 1.0 device */
+				new AHCI::AHCIDriver(device_header);
+			}
+		}
+	}
 }
 
 void enumerateDevice(uint64_t bus_addr, uint64_t device) {
