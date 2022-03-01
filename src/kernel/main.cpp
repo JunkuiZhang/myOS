@@ -9,6 +9,7 @@
 #include "gdt/gdt.h"
 #include "interrupts/idt.h"
 #include "interrupts/interrupts.h"
+#include "memory/heap.h"
 #include "memory/memory_utils.h"
 #include "memory/page_bitmap.h"
 #include "memory/pageframe_alloc.h"
@@ -82,6 +83,7 @@ extern "C" void _start(BootParamter *boot_param) {
 	/* END: memory setup */
 
 	/* START: heap setup */
+	initializeHeap((void *)0x0000100000000000, 0x10);
 	/* END: heap setup */
 
 	/* START: interrupts setup */
@@ -134,6 +136,12 @@ extern "C" void _start(BootParamter *boot_param) {
 	// 	memorySizeFormatter(page_frame_manager.getReservedMemorySize());
 	// shell.print("Reserved mem: %d MB %d KB\n", resv_mem.mega_bytes,
 	// 			resv_mem.kilo_bytes);
+	shell.println("Heap: %x", (uint64_t)malloc(0x8000));
+	void *temp = malloc(0x8000);
+	shell.println("Heap: %x", (uint64_t)malloc(0x8000));
+	shell.println("Heap: %x", (uint64_t)malloc(0x100));
+	free(temp);
+	shell.println("Heap: %x", (uint64_t)malloc(0x100));
 	for (uint64_t x = 0; x < 20; x++) {
 		shell.println("NUM: %d", x);
 		PIT::sleep_sec(10);
