@@ -117,7 +117,7 @@ extern "C" void _start(BootParamter *boot_param) {
 	/* END: setup io manager */
 
 	/* START: PIT setup */
-	PIT::setDivisor(2000);
+	PIT::setFrequency(600);
 	/* END: PIT setup */
 
 	shell.println("New page map now!");
@@ -144,7 +144,7 @@ extern "C" void _start(BootParamter *boot_param) {
 	shell.println("Heap: %x", (uint64_t)malloc(0x100));
 	for (uint64_t x = 0; x < 20; x++) {
 		shell.println("NUM: %d", x);
-		PIT::sleep_sec(10);
+		PIT::sleep_sec(1);
 	}
 
 	/* spin */
