@@ -21,7 +21,9 @@ void PageBitmap::init(size_t m_size, uint8_t *m_buffer) {
 	}
 }
 
-bool PageBitmap::operator[](uint64_t index) {
+bool PageBitmap::operator[](uint64_t index) { get(index); }
+
+bool PageBitmap::get(uint64_t index) {
 	if (index > size * 8)
 		return false;
 	uint64_t byte_index = index / 8;

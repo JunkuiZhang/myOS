@@ -149,11 +149,6 @@ extern "C" void _start(BootParamter *boot_param) {
 
 	/* spin */
 	while (1) {
-		// if (screen_manager.request_draw) {
-		// 	screen_manager.request_draw = false;
-		// 	screen_manager.clearScreen();
-		// 	shell.display();
-		// }
-		;
+		asm("hlt");
 	}
 }

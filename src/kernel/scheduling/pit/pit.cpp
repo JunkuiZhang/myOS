@@ -3,7 +3,7 @@
 
 namespace PIT {
 
-volatile double seconds_since_boot = 0;
+volatile uint64_t ms_since_boot = 0;
 // volatile uint64_t milliseconds_since_boot = 0;
 uint16_t divisor = 65535;
 
@@ -22,24 +22,15 @@ void setFrequency(uint64_t frequency) {
 	setDivisor(base_frequency / frequency);
 }
 
-volatile void tick() {
-	seconds_since_boot += 1 / (double)getFrequency();
-	// milliseconds_since_boot += (1000 * divisor / base_frequency);
-}
+volatile void tick() { ms_since_boot += (1000 * divisor / base_frequency); }
 
-void sleep_sec(double second) {
-	double end_time = seconds_since_boot + second;
-	while (seconds_since_boot < end_time) {
-		asm("hlt");
-	}
-}
+void sleep_sec(double second) { sleep((uint64_t)(second * 1000)); }
 
 void sleep(uint64_t milliseconds) {
-	// uint64_t start_time = milliseconds_since_boot;
-	// while (milliseconds_since_boot < start_time + milliseconds) {
-	// 	asm("hlt");
-	// }
-	sleep_sec((double)milliseconds / 1000);
+	uint64_t end_time = ms_since_boot + milliseconds;
+	while (ms_since_boot < end_time) {
+		asm("hlt");
+	}
 }
 
 } // namespace PIT

@@ -5,7 +5,7 @@
 namespace PIT {
 
 // extern volatile uint64_t milliseconds_since_boot;
-extern volatile double seconds_since_boot;
+extern volatile uint64_t ms_since_boot;
 const uint64_t base_frequency = 1193182;
 
 void sleep_sec(double second);

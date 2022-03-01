@@ -119,6 +119,7 @@ void HeapSegmentHeader::combineForward() {
 	if (next->next != NULL)
 		next->next->last = this;
 	length = length + next->length + sizeof(HeapSegmentHeader);
+	next = next->next;
 }
 
 void HeapSegmentHeader::combineBackward() {
