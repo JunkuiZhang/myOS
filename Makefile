@@ -63,11 +63,11 @@ build/myos_img/EFI/BOOT/BootX64.efi: build/bootloader/main.efi
 # 	cd src/posix-uefi && make
 
 build/kernel/main.o: src/kernel/main.cpp
-	clang -target x86_64-elf -fno-stack-protector -fno-stack-check -fno-exceptions -D__x86_64__ -I. -c $< -o $@
+	clang -target x86_64-elf -fno-stack-protector -fno-stack-check -fno-exceptions -mno-red-zone -D__x86_64__ -I. -c $< -o $@
 
 build/kernel/%.o: src/kernel/%.cpp
 	@mkdir -p $(@D)
-	clang -target x86_64-elf -fno-stack-protector -fno-stack-check -fno-exceptions -D__x86_64__ -I. -c $^ -o $@
+	clang -target x86_64-elf -fno-stack-protector -fno-stack-check -fno-exceptions -mno-red-zone -D__x86_64__ -I. -c $^ -o $@
 
 build/kernel/%_asm.o: src/kernel/%.asm
 	@mkdir -p $(@D)

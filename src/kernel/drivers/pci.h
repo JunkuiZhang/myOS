@@ -21,4 +21,11 @@ struct PCIDeviceHeader {
 
 void enumeratePCI(ACPI::MCFGHeader *mcfg);
 
+extern const char *DEVICE_CLASSES[];
+const char *getVendorName(uint16_t vendor_id);
+const char *getDeviceName(uint16_t vendor_id, uint16_t device_id);
+const char *getSubClassName(uint8_t class_code, uint8_t subclass_code);
+const char *getProgramInterfaceName(uint8_t class_code, uint8_t subclass_code,
+									uint8_t prog_interface);
+
 } // namespace PCI

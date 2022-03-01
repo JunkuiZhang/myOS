@@ -1,4 +1,5 @@
 #include "pci.h"
+#include "../app/shell/shell.h"
 #include "../memory/pagetable_manager.h"
 
 namespace PCI {
@@ -12,6 +13,14 @@ void enumerateFunction(uint64_t device_addr, uint64_t function) {
 		return;
 	if (device_header->device_id == 0xffff)
 		return;
+	OS_SHELL->println(
+		"Vendor: %s - %s - %s - %s - %s",
+		getVendorName(device_header->vendor_id),
+		getDeviceName(device_header->vendor_id, device_header->device_id),
+		DEVICE_CLASSES[device_header->mclass],
+		getSubClassName(device_header->mclass, device_header->subclass),
+		getProgramInterfaceName(device_header->mclass, device_header->subclass,
+								device_header->program_interface));
 }
 
 void enumerateDevice(uint64_t bus_addr, uint64_t device) {

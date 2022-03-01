@@ -2,18 +2,21 @@
 
 namespace ACPI {
 
-void *findTable(ACPI::SDTHeader *sdt_header, char *signature) {
-	uint32_t entries = (sdt_header->length - sizeof(ACPI::SDTHeader)) / 8;
-	for (int x = 0; x < entries; x++) {
-		ACPI::SDTHeader *new_header =
-			(ACPI::SDTHeader *)((uint64_t)sdt_header + sizeof(ACPI::SDTHeader) +
-								8 * x);
-		for (int y = 0; y < 4; y++) {
-			if (new_header->signature[y] != signature[y]) {
-				break;
-			}
-			if (y == 3)
-				return new_header;
+bool stringCompare(char *str1, char *str2, uint64_t length) {
+	for (uint64_t x = 0; x < length; x++) {
+		if (str1[x] != str2[x])
+			return false;
+	}
+	return true;
+}
+
+void *findTable(SDTHeader *sdt_header, char *signature) {
+	uint64_t entries = (sdt_header->length - sizeof(SDTHeader)) / 8;
+	for (uint64_t x = 0; x < entries; x++) {
+		SDTHeader *new_header = (SDTHeader *)(*(
+			(uint64_t *)((uint64_t)sdt_header + sizeof(SDTHeader) + 8 * x)));
+		if (stringCompare(new_header->signature, signature, 4)) {
+			return (void *)new_header;
 		}
 	}
 	return 0;

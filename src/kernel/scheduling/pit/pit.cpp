@@ -13,7 +13,7 @@ void setDivisor(uint16_t m_divisor) {
 	divisor = m_divisor;
 	outByte(0x40, (uint8_t)(m_divisor & 0x00ff));
 	ioWait();
-	outByte(0x40, (uint8_t)((m_divisor & 0xff00) >> 8));
+	outByte(0x40, (uint8_t)(m_divisor >> 8));
 }
 
 uint64_t getFrequency() { return base_frequency / divisor; }
@@ -28,8 +28,8 @@ volatile void tick() {
 }
 
 void sleep_sec(double second) {
-	double startTime = seconds_since_boot;
-	while (seconds_since_boot < startTime + second) {
+	double end_time = seconds_since_boot + second;
+	while (seconds_since_boot < end_time) {
 		asm("hlt");
 	}
 }

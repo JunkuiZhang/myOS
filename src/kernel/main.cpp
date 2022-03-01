@@ -99,6 +99,12 @@ extern "C" void _start(BootParamter *boot_param) {
 	remapPIC();
 	/* END: interrupts setup */
 
+	/* START: ACPI setup */
+	ACPI::SDTHeader *xsdt = (ACPI::SDTHeader *)(boot_param->rsdp->XSDT_address);
+	ACPI::MCFGHeader *mcfg = (ACPI::MCFGHeader *)ACPI::findTable(xsdt, "MCFG");
+	PCI::enumeratePCI(mcfg);
+	/* END: ACPI setup */
+
 	outByte(PIC1_DATA, 0b11111100);
 	outByte(PIC2_DATA, 0b11111111);
 	asm("sti"); // enable mask interrupts, "cli" to cancel
@@ -111,15 +117,6 @@ extern "C" void _start(BootParamter *boot_param) {
 	/* START: PIT setup */
 	PIT::setDivisor(2000);
 	/* END: PIT setup */
-
-	/* START: ACPI setup */
-	ACPI::SDTHeader *xsdt = (ACPI::SDTHeader *)(boot_param->rsdp->XSDT_address);
-	shell.println("ADDRESS: %d", (uint64_t)xsdt);
-	ACPI::MCFGHeader *mcfg =
-		(ACPI::MCFGHeader *)ACPI::findTable(xsdt, (char *)"MCFG");
-	PCI::enumeratePCI(mcfg);
-	// shell.println("MCFG: %d", (uint64_t)mcfg);
-	/* END: ACPI setup */
 
 	shell.println("New page map now!");
 	shell.println("Hello from kernel!");

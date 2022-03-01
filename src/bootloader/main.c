@@ -86,6 +86,20 @@ UINTN stringCompare(CHAR8 *str1, CHAR8 *str2, UINTN length) {
 	return 1;
 }
 
+/* START: ACPI stuff */
+typedef struct {
+	CHAR8 signature[8];
+	uint8_t check_sum;
+	CHAR8 oem_id[6];
+	uint8_t revision;
+	uint32_t RSDT_address;
+	uint32_t length;
+	uint64_t XSDT_address;
+	uint8_t extended_checksum;
+	uint8_t reserved[3];
+} RSDP2;
+/* END: ACPI stuff */
+
 typedef struct {
 	unsigned int *framebuffer;
 	unsigned int width;
@@ -94,7 +108,7 @@ typedef struct {
 	EFI_MEMORY_DESCRIPTOR *mem_map;
 	UINTN mem_map_size;
 	UINTN mem_desc_size;
-	void *rsdp; /* root system descriptor pointer */
+	RSDP2 *rsdp;
 } BootParamater;
 
 EFI_STATUS
@@ -240,21 +254,21 @@ efi_main(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table) {
 	boot_param.mem_desc_size = desc_size;
 
 	EFI_CONFIGURATION_TABLE *config_table = ST->ConfigurationTable;
-	void *rsdp = NULL;
+	RSDP2 *rsdp = NULL;
 	EFI_GUID acpi2_table_guid = ACPI_20_TABLE_GUID;
 	for (UINTN x = 0; x < ST->NumberOfTableEntries; x++) {
-		// UINTN indicator = uefi_call_wrapper(
-		// 	CompareGuid, 2, &config_table[x].VendorGuid, &acpi2_table_guid);
 		UINTN indicator =
 			CompareGuid(&config_table[x].VendorGuid, &acpi2_table_guid);
 		if (indicator) {
 			if (stringCompare((CHAR8 *)"RSD PTR ",
 							  (CHAR8 *)config_table->VendorTable, 8)) {
-				rsdp = (void *)config_table->VendorTable;
-				break;
+				rsdp = (RSDP2 *)config_table->VendorTable;
+				// break;
 			}
+			config_table++;
 		}
 	}
+	Print(L"RSDP addr: %u, version: %u\n", (uint64_t)rsdp, rsdp->revision);
 	boot_param.rsdp = rsdp;
 
 	status = uefi_call_wrapper(BS->ExitBootServices, 2, image_handle, map_key);
