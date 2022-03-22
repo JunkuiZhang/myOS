@@ -1,5 +1,5 @@
 #pragma once
-#include <stdint.h>
+#include <cstdint>
 
 struct GDTDescriptor {
 	uint16_t size;

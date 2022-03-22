@@ -1,6 +1,6 @@
 #pragma once
 #include "../lib/utils/keyboard_case.h"
-#include <stdint.h>
+#include <cstdint>
 
 class IOHandlerManager {
   private:

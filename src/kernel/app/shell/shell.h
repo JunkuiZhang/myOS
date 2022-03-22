@@ -1,7 +1,7 @@
 #pragma once
 #include "../../lib/font/font_data.h"
 #include "shell_utils.h"
-#include <stdarg.h>
+#include <cstdarg>
 
 class Shell {
   private:

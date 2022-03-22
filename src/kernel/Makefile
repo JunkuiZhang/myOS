@@ -87,14 +87,14 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/xiaobai/projects/myOS/CMakeFiles /home/xiaobai/projects/myOS//CMakeFiles/progress.marks
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
+	cd /home/xiaobai/projects/myOS && $(CMAKE_COMMAND) -E cmake_progress_start /home/xiaobai/projects/myOS/CMakeFiles /home/xiaobai/projects/myOS/src/kernel//CMakeFiles/progress.marks
+	cd /home/xiaobai/projects/myOS && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 src/kernel/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/xiaobai/projects/myOS/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
 clean:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 clean
+	cd /home/xiaobai/projects/myOS && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 src/kernel/clean
 .PHONY : clean
 
 # The main clean target
@@ -103,44 +103,56 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 preinstall
+	cd /home/xiaobai/projects/myOS && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 src/kernel/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 preinstall
+	cd /home/xiaobai/projects/myOS && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 src/kernel/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	$(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+	cd /home/xiaobai/projects/myOS && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
-#=============================================================================
-# Target rules for targets named kernel
+# Convenience name for target.
+src/kernel/CMakeFiles/kernel.dir/rule:
+	cd /home/xiaobai/projects/myOS && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 src/kernel/CMakeFiles/kernel.dir/rule
+.PHONY : src/kernel/CMakeFiles/kernel.dir/rule
 
-# Build rule for target.
-kernel: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 kernel
+# Convenience name for target.
+kernel: src/kernel/CMakeFiles/kernel.dir/rule
 .PHONY : kernel
 
 # fast build rule for target.
 kernel/fast:
-	$(MAKE) $(MAKESILENT) -f src/kernel/CMakeFiles/kernel.dir/build.make src/kernel/CMakeFiles/kernel.dir/build
+	cd /home/xiaobai/projects/myOS && $(MAKE) $(MAKESILENT) -f src/kernel/CMakeFiles/kernel.dir/build.make src/kernel/CMakeFiles/kernel.dir/build
 .PHONY : kernel/fast
 
-#=============================================================================
-# Target rules for targets named bootloader
+main.o: main.cpp.o
+.PHONY : main.o
 
-# Build rule for target.
-bootloader: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 bootloader
-.PHONY : bootloader
+# target to build an object file
+main.cpp.o:
+	cd /home/xiaobai/projects/myOS && $(MAKE) $(MAKESILENT) -f src/kernel/CMakeFiles/kernel.dir/build.make src/kernel/CMakeFiles/kernel.dir/main.cpp.o
+.PHONY : main.cpp.o
 
-# fast build rule for target.
-bootloader/fast:
-	$(MAKE) $(MAKESILENT) -f src/bootloader/CMakeFiles/bootloader.dir/build.make src/bootloader/CMakeFiles/bootloader.dir/build
-.PHONY : bootloader/fast
+main.i: main.cpp.i
+.PHONY : main.i
+
+# target to preprocess a source file
+main.cpp.i:
+	cd /home/xiaobai/projects/myOS && $(MAKE) $(MAKESILENT) -f src/kernel/CMakeFiles/kernel.dir/build.make src/kernel/CMakeFiles/kernel.dir/main.cpp.i
+.PHONY : main.cpp.i
+
+main.s: main.cpp.s
+.PHONY : main.s
+
+# target to generate assembly for a file
+main.cpp.s:
+	cd /home/xiaobai/projects/myOS && $(MAKE) $(MAKESILENT) -f src/kernel/CMakeFiles/kernel.dir/build.make src/kernel/CMakeFiles/kernel.dir/main.cpp.s
+.PHONY : main.cpp.s
 
 # Help Target
 help:
@@ -150,8 +162,10 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
-	@echo "... bootloader"
 	@echo "... kernel"
+	@echo "... main.o"
+	@echo "... main.i"
+	@echo "... main.s"
 .PHONY : help
 
 
@@ -163,6 +177,6 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	$(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+	cd /home/xiaobai/projects/myOS && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 

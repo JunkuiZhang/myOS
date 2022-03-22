@@ -1,5 +1,5 @@
 #pragma once
-#include <stdint.h>
+#include <cstdint>
 
 enum PageTableFlags {
 	/* P, or 'Present'. If the bit is set, the page is actually in physical

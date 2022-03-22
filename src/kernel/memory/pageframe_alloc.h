@@ -2,7 +2,7 @@
 
 #include "efi_memory.h"
 #include "page_bitmap.h"
-#include <stdint.h>
+#include <cstdint>
 
 class PageFrameAllocator {
   private:

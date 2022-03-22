@@ -1,0 +1,17 @@
+Diagnostics:
+  ClangTidy:
+    Add:
+    [
+      modernize-*,
+      performance-*,
+      bugprone-*,
+      clang-analyzer-*,
+      readability-identifier*,
+    ]
+    CheckOptions:
+      readability-identifier-naming.VariableCase: CamelCase
+    
+InlayHints:
+  Enabled: Yes
+  ParameterNames: Yes
+  DeducedTypes: Yes

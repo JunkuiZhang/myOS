@@ -1,6 +1,6 @@
 #pragma once
 #include "acpi.h"
-#include <stdint.h>
+#include <cstdint>
 
 namespace PCI {
 

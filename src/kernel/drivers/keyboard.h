@@ -1,5 +1,5 @@
 #pragma once
-#include <stdint.h>
+#include <cstdint>
 
 #define left_shift 0x2a /* pressed, +0x80 released */
 #define right_shift 0x36

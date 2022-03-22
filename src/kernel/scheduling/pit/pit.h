@@ -1,5 +1,5 @@
 #pragma once
-#include <stdint.h>
+#include <cstdint>
 
 /* Programable Interval Timer */
 namespace PIT {

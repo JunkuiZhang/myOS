@@ -1,5 +1,5 @@
 #pragma once
-#include <stdint.h>
+#include <cstdint>
 
 struct EfiMemoryDescriptor {
 	uint32_t Type;			// Field size is 32 bits followed by 32 bit pad
