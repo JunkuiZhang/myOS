@@ -50,5 +50,3 @@ void IOHandlerManager::handleKeyboard(uint8_t scancode) {
 	OS_SHELL->putchar(target_char);
 	OS_SCREEN_MANAGER->request_draw = true;
 }
-
-IOHandlerManager::~IOHandlerManager() {}

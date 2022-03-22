@@ -74,7 +74,7 @@ void Port::configure() {
 	hba_port->fis_base_address_upper = (uint32_t)((uint64_t)fis_base >> 32);
 	memset(fis_base, 0, 256);
 
-	HBACommandHeader *command_header =
+	auto command_header =
 		(HBACommandHeader *)((uint64_t)hba_port->command_list_base +
 							 ((uint64_t)hba_port->command_list_base_upper
 							  << 32));

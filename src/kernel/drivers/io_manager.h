@@ -8,7 +8,7 @@ class IOHandlerManager {
 
   public:
 	IOHandlerManager();
-	~IOHandlerManager();
+	~IOHandlerManager() = default;
 
 	void handleKeyboard(uint8_t scancode);
 };
