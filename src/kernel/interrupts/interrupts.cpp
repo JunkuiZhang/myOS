@@ -5,33 +5,33 @@
 #include "../drivers/keyboard.h"
 #include "../ints_handler/panic.h"
 #include "../scheduling/pit/pit.h"
-#include <stdint.h>
+#include <cstdint>
 
 __attribute__((interrupt)) void
 pageFalutHandler(struct interrupt_frame *frame) {
 	panic("Page fault detected.\n");
-	while (1)
+	while (true)
 		;
 }
 
 __attribute__((interrupt)) void
 doubleFalutHandler(struct interrupt_frame *frame) {
 	panic("Double fault detected.\n");
-	while (1)
+	while (true)
 		;
 }
 
 __attribute__((interrupt)) void
 generalProtectionFalutHandler(struct interrupt_frame *frame) {
 	panic("General protection fault detected.\n");
-	while (1)
+	while (true)
 		;
 }
 
 __attribute__((interrupt)) void
 keyboardIntHandler(struct interrupt_frame *frame) {
 	uint8_t scancode = inByte(0x60);
-	OS_IO_Manager->handleKeyboard(scancode);
+	OS_IO_MANAGER->handleKeyboard(scancode);
 	endPICMaster();
 }
 

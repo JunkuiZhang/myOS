@@ -13,4 +13,4 @@ class IOHandlerManager {
 	void handleKeyboard(uint8_t scancode);
 };
 
-extern IOHandlerManager *OS_IO_Manager;
+extern IOHandlerManager *OS_IO_MANAGER;

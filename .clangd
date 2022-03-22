@@ -9,7 +9,7 @@ Diagnostics:
       readability-identifier*,
     ]
     CheckOptions:
-      readability-identifier-naming.VariableCase: CamelCase
+      readability-identifier-naming.VariableCase: lower_case
     
 InlayHints:
   Enabled: Yes

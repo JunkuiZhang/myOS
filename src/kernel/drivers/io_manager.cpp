@@ -3,7 +3,7 @@
 #include "../video/screen.h"
 #include "keyboard.h"
 
-IOHandlerManager *OS_IO_Manager;
+IOHandlerManager *OS_IO_MANAGER;
 
 IOHandlerManager::IOHandlerManager() { keyboard_info.upper_case = false; }
 

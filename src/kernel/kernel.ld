@@ -3,7 +3,7 @@ ENTRY(_start)
 
 SECTIONS
 {
-	KernelStart = .;
+	kernel_start = .;
 	.text : ALIGN(0x1000)
 	{
 		*(.text)
@@ -21,5 +21,5 @@ SECTIONS
 		*(COMMON)
 		*(.bss)
 	}
-	KernelEnd = .;
+	kernel_end = .;
 }
