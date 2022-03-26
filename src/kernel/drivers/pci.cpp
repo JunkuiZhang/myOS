@@ -3,14 +3,29 @@
 #include "../memory/heap.h"
 #include "../memory/pagetable_manager.h"
 #include "ahci/ahci.h"
+#include "graphics/qemu.h"
+#include "io.h"
+#include <cstdint>
 
 namespace PCI {
+
+uint32_t pciReadU32(uint32_t id, uint32_t reg) {
+	uint32_t addr = 0x80000000 | id | (reg & 0xfc);
+	writeU32(PCI_CONFIG_ADDR, addr);
+	return readU32(PCI_CONFIG_DATA);
+}
+
+void pciWriteU32(uint32_t id, uint32_t reg, uint32_t data) {
+	uint32_t address = 0x80000000 | id | (reg & 0xfc);
+	writeU32(PCI_CONFIG_ADDR, address);
+	writeU32(PCI_CONFIG_DATA, data);
+}
 
 void enumerateFunction(uint64_t device_addr, uint64_t function) {
 	uint64_t offset = function << 12;
 	uint64_t func_addr = device_addr + offset;
 	OS_PAGETABLE_MANAGER->mapMemory((void *)func_addr, (void *)func_addr);
-	PCIDeviceHeader *device_header = (PCIDeviceHeader *)func_addr;
+	auto device_header = (PCIDeviceHeader *)func_addr;
 	if (device_header->device_id == 0)
 		return;
 	if (device_header->device_id == 0xffff)
@@ -31,8 +46,24 @@ void enumerateFunction(uint64_t device_addr, uint64_t function) {
 			switch (device_header->program_interface) {
 			case 0x01: /* AHCI 1.0 device */
 				new AHCI::AHCIDriver(device_header);
+				break;
 			}
+			break;
 		}
+		break;
+	case 0x03: /* display controller */
+		switch (device_header->subclass) {
+		case 0x00: /* VGA Compatible Controller */
+			switch (device_header->program_interface) {
+			case 0x00: /* VGA Controller */
+				// auto vga_header = (PCIHeader0 *)device_header;
+				auto temp = new QemuGraphicsController(device_header);
+				temp->start();
+				break;
+			}
+			break;
+		}
+		break;
 	}
 }
 

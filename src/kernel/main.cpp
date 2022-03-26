@@ -125,26 +125,8 @@ extern "C" void _start(BootParamter *boot_param) {
 	system_shell.println("New page map now!");
 	system_shell.println("Hello from kernel!");
 	system_shell.getShellInfo();
-	system_shell.println("Frame size: %d, raw num: %d",
-						 boot_param->framebuffer_size,
-						 boot_param->width * boot_param->height);
-	// shell.deleteChar(0, 3);
-	// shell.print("Used mem: %d KB\n",
-	// 			page_frame_manager.getUsedMemorySize() / 1024);
-	// auto free_mem =
-	// memorySizeFormatter(page_frame_manager.getFreeMemorySize());
-	// shell.print("Free mem: %d MB %d KB\n", free_mem.mega_bytes,
-	// 			free_mem.kilo_bytes);
-	// auto resv_mem =
-	// 	memorySizeFormatter(page_frame_manager.getReservedMemorySize());
-	// shell.print("Reserved mem: %d MB %d KB\n", resv_mem.mega_bytes,
-	// 			resv_mem.kilo_bytes);
-	system_shell.println("Heap: %x", (uint64_t)malloc(0x8000));
-	void *temp = malloc(0x8000);
-	system_shell.println("Heap: %x", (uint64_t)malloc(0x8000));
-	system_shell.println("Heap: %x", (uint64_t)malloc(0x100));
-	free(temp);
-	system_shell.println("Heap: %x", (uint64_t)malloc(0x100));
+	system_shell.println("FB base: %x", framebuffer_base);
+
 	for (uint64_t x = 0; x < 20; x++) {
 		system_shell.println("NUM: %d", x);
 		PIT::sleep_sec(1);

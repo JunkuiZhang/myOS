@@ -22,6 +22,10 @@ const char *getVendorName(uint16_t vendor_id) {
 		return "AMD";
 	case 0x10de:
 		return "NVIDIA Corporation";
+	case 0x1234:
+		return "QEMU";
+	case 0x1af4:
+		return "VirtIO";
 	}
 	return "Unknown";
 }
@@ -38,6 +42,16 @@ const char *getDeviceName(uint16_t vendor_id, uint16_t device_id) {
 			return "6 port SATA Controller [AHCI mode]";
 		case 0x2930:
 			return "SMBus Controller";
+		}
+	case 0x1234: // QEMU
+		switch (device_id) {
+		case 0x1111:
+			return "QEMU VGA Adapter";
+		}
+	case 0x1af4: // VirtIO
+		switch (device_id) {
+		case 0x1050:
+			return "VirtIO GPU";
 		}
 	}
 	return "Unknown";

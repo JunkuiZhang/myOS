@@ -1,4 +1,5 @@
 #include "shell.h"
+#include <cstdint>
 
 Shell *OS_SHELL;
 
@@ -109,9 +110,9 @@ void Shell::stringPreprocess(const char *str, va_list args) {
 				continue;
 			}
 			if (current_char == 'x') {
-				int number = va_arg(args, int);
-				int left = number / 16;
-				int bufferable = number % 16;
+				uint64_t number = va_arg(args, uint64_t);
+				uint64_t left = number / 16;
+				uint64_t bufferable = number % 16;
 				uint32_t indicator = 0;
 				bool have_printed = false;
 				while (left > 0 || bufferable > 0 || !have_printed) {

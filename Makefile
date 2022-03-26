@@ -58,6 +58,7 @@ ASMOBJ = $(patsubst src/kernel/%.asm, build/kernel/%_asm.o, $(ASMSRC))
 
 run: build/myos_img/EFI/BOOT/BootX64.efi build/myos_img/kernel.elf
 	qemu-system-x86_64 -machine q35 -cpu qemu64 -net none \
+	-device virtio-vga-gl -display sdl,gl=on \
 	-drive if=pflash,format=raw,unit=0,file=$(BIOS_CODE),readonly=on \
 	-drive if=pflash,format=raw,unit=1,file=$(BIOS_VARS),readonly=on \
 	-drive format=raw,file=fat:rw:build/myos_img

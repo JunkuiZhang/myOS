@@ -1,8 +1,24 @@
 #pragma once
 #include "acpi.h"
+#include "io.h"
 #include <cstdint>
 
 namespace PCI {
+
+/* I/O Ports */
+#define PCI_CONFIG_ADDR 0xcf8
+#define PCI_CONFIG_DATA 0xcfC
+
+/* Type 0x00 (Generic) Configuration Registers */
+#define PCI_CONFIG_BAR0 0x10
+#define PCI_CONFIG_BAR1 0x14
+#define PCI_CONFIG_BAR2 0x18
+#define PCI_CONFIG_BAR3 0x1c
+#define PCI_CONFIG_BAR4 0x20
+#define PCI_CONFIG_BAR5 0x24
+
+uint32_t pciReadU32(uint32_t id, uint32_t reg);
+void pciWriteU32(uint32_t id, uint32_t reg, uint32_t data);
 
 struct PCIDeviceHeader {
 	uint16_t vendor_id;
