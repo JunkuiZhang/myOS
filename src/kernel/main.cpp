@@ -3,6 +3,7 @@
 #include "app/shell/shell.h"
 #include "boot_param.h"
 #include "drivers/acpi.h"
+#include "drivers/graphics/qemu.h"
 #include "drivers/io.h"
 #include "drivers/io_manager.h"
 #include "drivers/pci.h"
@@ -126,6 +127,8 @@ extern "C" void _start(BootParamter *boot_param) {
 	system_shell.println("Hello from kernel!");
 	system_shell.getShellInfo();
 	system_shell.println("FB base: %x", framebuffer_base);
+
+	QEMU_GFX_CTL->start();
 
 	for (uint64_t x = 0; x < 20; x++) {
 		system_shell.println("NUM: %d", x);
